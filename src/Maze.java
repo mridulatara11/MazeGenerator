@@ -1,11 +1,13 @@
 // Maze.java
 
+import java.awt.*;
 import java.util.*;
+import javax.swing.*;
 
 public class Maze {
 
     private final int rows, cols;
-    private final Cell[][] grid;
+    public final Cell[][] grid;
     private final Random rand = new Random();
 
     public Maze(int rows, int cols) {
@@ -47,7 +49,7 @@ public class Maze {
     }
 
     private Cell getRandomUnvisitedNeighbor(Cell cell) {
-        List<Cell> neighbors = new ArrayList<>();
+        java.util.List<Cell> neighbors = new java.util.ArrayList<>();
         int r = cell.row;
         int c = cell.col;
 
@@ -89,6 +91,7 @@ public class Maze {
         }
     }
 
+    // Animated solver with callback for GUI
     public void solveAnimated(Runnable onStep) {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -143,33 +146,8 @@ public class Maze {
         return cell.row + "," + cell.col;
     }
 
-    private void printWithDelay() {
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        clearConsole();
-        display();
-    }
-
-    private void clearConsole() {
-        try {
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            } else {
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-            }
-        } catch (Exception e) {
-            for (int i = 0; i < 50; i++) {
-                System.out.println();
-            }
-        }
-    }
-
-    private List<Cell> getAccessibleNeighbors(Cell cell) {
-        List<Cell> neighbors = new ArrayList<>();
+    private java.util.List<Cell> getAccessibleNeighbors(Cell cell) {
+        java.util.List<Cell> neighbors = new java.util.ArrayList<>();
         int r = cell.row;
         int c = cell.col;
 
@@ -210,12 +188,12 @@ public class Maze {
         }
     }
 
-    private static class Cell {
+    public static class Cell {
 
-        int row, col;
-        boolean[] walls = {true, true, true, true}; // top, right, bottom, left
-        boolean visited = false;
-        boolean inPath = false;
+        public int row, col;
+        public boolean[] walls = {true, true, true, true}; // top, right, bottom, left
+        public boolean visited = false;
+        public boolean inPath = false;
 
         Cell(int row, int col) {
             this.row = row;
@@ -239,85 +217,74 @@ public class Maze {
             return Objects.hash(row, col);
         }
     }
-}
 
-// MazeGUI.java
-import javax.swing.*;
+    // MazePanel for drawing the maze
+    public static class MazePanel extends JPanel {
 
-import java.awt.*;
+        private final Maze maze;
+        private final int cellSize = 30;
 
-public class MazeGUI extends JFrame {
+        public MazePanel(Maze maze) {
+            this.maze = maze;
+            setPreferredSize(new Dimension(maze.cols * cellSize + 2, maze.rows * cellSize + 2));
+            setBackground(Color.WHITE);
+        }
 
-    private final Maze maze;
-    private final int cellSize = 30;
-
-    public MazeGUI(Maze maze) {
-        this.maze = maze;
-        setTitle("Maze Solver");
-        setSize(maze.cols * cellSize + 50, maze.rows * cellSize + 70);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setVisible(true);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        for (int i = 0; i < maze.rows; i++) {
-            for (int j = 0; j < maze.cols; j++) {
-                int x = 25 + j * cellSize;
-                int y = 50 + i * cellSize;
-                Maze.Cell cell = maze.grid[i][j];
-
-                // Draw path
-                if (cell.inPath) {
-                    g.setColor(Color.GREEN);
-                    g.fillRect(x, y, cellSize, cellSize);
-                } else if (cell.visited) {
-                    g.setColor(new Color(220, 220, 220));
-                    g.fillRect(x, y, cellSize, cellSize);
-                } else {
-                    g.setColor(Color.WHITE);
-                    g.fillRect(x, y, cellSize, cellSize);
-                }
-
-                g.setColor(Color.BLACK);
-                // Top wall
-                if (cell.walls[0]) {
-                    g.drawLine(x, y, x + cellSize, y);
-                }
-                // Right wall
-                if (cell.walls[1]) {
-                    g.drawLine(x + cellSize, y, x + cellSize, y + cellSize);
-                }
-                // Bottom wall
-                if (cell.walls[2]) {
-                    g.drawLine(x, y + cellSize, x + cellSize, y + cellSize);
-                }
-                // Left wall
-                if (cell.walls[3]) {
-                    g.drawLine(x, y, x, y + cellSize);
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            for (int i = 0; i < maze.rows; i++) {
+                for (int j = 0; j < maze.cols; j++) {
+                    int x = j * cellSize;
+                    int y = i * cellSize;
+                    Cell cell = maze.grid[i][j];
+                    if (cell.inPath) {
+                        g.setColor(Color.GREEN);
+                        g.fillRect(x, y, cellSize, cellSize);
+                    } else if (cell.visited) {
+                        g.setColor(new Color(220, 220, 220));
+                        g.fillRect(x, y, cellSize, cellSize);
+                    } else {
+                        g.setColor(Color.WHITE);
+                        g.fillRect(x, y, cellSize, cellSize);
+                    }
+                    g.setColor(Color.BLACK);
+                    if (cell.walls[0]) {
+                        g.drawLine(x, y, x + cellSize, y);
+                    }
+                    if (cell.walls[1]) {
+                        g.drawLine(x + cellSize, y, x + cellSize, y + cellSize);
+                    }
+                    if (cell.walls[2]) {
+                        g.drawLine(x, y + cellSize, x + cellSize, y + cellSize);
+                    }
+                    if (cell.walls[3]) {
+                        g.drawLine(x, y, x, y + cellSize);
+                    }
                 }
             }
         }
     }
 
-    public void animateSolve() {
+    // Main method to show dialog and animate
+    public static void main(String[] args) {
+        Maze maze = new Maze(15, 15);
+        maze.generate();
+        MazePanel panel = new MazePanel(maze);
+        JDialog dialog = new JDialog((Frame) null, "Maze Solver", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.getContentPane().add(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
         new Thread(() -> {
             maze.solveAnimated(() -> {
-                repaint();
+                panel.repaint();
                 try {
                     Thread.sleep(20);
                 } catch (InterruptedException ignored) {
                 }
             });
         }).start();
-    }
-
-    public static void main(String[] args) {
-        Maze maze = new Maze(15, 15);
-        maze.generate();
-        MazeGUI gui = new MazeGUI(maze);
-        gui.animateSolve();
+        dialog.setVisible(true);
     }
 }
